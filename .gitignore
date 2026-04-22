@@ -495,6 +495,9 @@ copilot-instructions.md
 *.ai-chat
 *.prompt
 
+.github/instructions/
+*.instructions.md
+
 # Extended Environment Variables
 *.env
 .env.*
