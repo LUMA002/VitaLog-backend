@@ -510,11 +510,12 @@ appsettings.*.json
 secrets.json
 
 # Local Databases (for local mocking, testing, development, etc.)
+scripts/
 *.db
 *.sqlite
 *.sqlite3
 *.db-shm
 *.db-wal
 
-# 6. HTTP Client & REST files
+# HTTP Client & REST files
 *.httpenv.json
