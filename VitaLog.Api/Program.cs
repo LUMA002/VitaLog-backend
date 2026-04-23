@@ -1,6 +1,8 @@
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using Serilog;
+//using VitaLog.Api.Infrastructure.Auth;
 using VitaLog.Api.Infrastructure.Database;
 using VitaLog.Api.Infrastructure.Middleware;
 
@@ -36,6 +38,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     }
 });
 
+builder.Services.AddValidatorsFromAssemblyContaining<Program>(includeInternalTypes: true);
+//builder.Services.AddJwtAuth(builder.Configuration);
+
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
@@ -46,6 +51,9 @@ app.UseSerilogRequestLogging();
 app.UseExceptionHandler();
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
+app.UseAuthorization();
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
@@ -53,6 +61,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.MapGet("/health", () => TypedResults.Ok(new { status = "ok" }))
-    .WithName("Health");
+    .WithName("Health")
+    .AllowAnonymous();
 
 await app.RunAsync();
