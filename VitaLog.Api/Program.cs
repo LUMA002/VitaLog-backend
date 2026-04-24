@@ -2,7 +2,7 @@ using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using Serilog;
-//using VitaLog.Api.Infrastructure.Auth;
+using VitaLog.Api.Infrastructure.Auth;
 using VitaLog.Api.Infrastructure.Database;
 using VitaLog.Api.Infrastructure.Middleware;
 
@@ -39,7 +39,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 });
 
 builder.Services.AddValidatorsFromAssemblyContaining<Program>(includeInternalTypes: true);
-//builder.Services.AddJwtAuth(builder.Configuration);
+builder.Services.AddJwtAuth(builder.Configuration);
 
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
