@@ -2,15 +2,15 @@
 
 public sealed class UserRefreshToken
 {
-    public Guid Id { get; set; }
-    public Guid UserId { get; set; }
+    public Guid Id { get; init; }
+    public Guid UserId { get; init; }
 
     /// <summary>
     /// Hashed token
     /// </summary>
-    public string Token { get; set; } = string.Empty; // Hashed
-    public DateTimeOffset ExpiresAt { get; set; }
-    public DateTimeOffset CreatedAt { get; set; }
+    public string Token { get; init; } = string.Empty; // Hashed
+    public DateTimeOffset ExpiresAt { get; init; }
+    public DateTimeOffset CreatedAt { get; init; }
     public DateTimeOffset? RevokedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
 

@@ -2,8 +2,8 @@
 
 public sealed class ProductIngredient
 {
-    public Guid Id { get; set; }
-    public Guid ProductId { get; set; }
+    public Guid Id { get; init; }
+    public Guid ProductId { get; init; }
     public Guid? IngredientId { get; set; } // nullable by hybrid rule
     public string? CustomIngredientName { get; set; } // nullable by hybrid rule
     public decimal Amount { get; set; } // > 0

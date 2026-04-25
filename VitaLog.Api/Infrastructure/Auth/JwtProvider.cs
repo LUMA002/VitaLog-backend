@@ -1,7 +1,7 @@
-using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using VitaLog.Api.Domain.Enums;
 
@@ -11,14 +11,14 @@ public sealed class JwtProvider : IJwtProvider
 {
     private readonly JwtOptions _options;
     private readonly TimeProvider _timeProvider;
-    private readonly JwtSecurityTokenHandler _tokenHandler = new();
+    private readonly JsonWebTokenHandler _tokenHandler = new();
 
     // Instantiated once per provider lifetime to reduce memory allocation
     private readonly SigningCredentials _credentials;
 
     // Cached to avoid reflection overhead on every token generation
     private static readonly Role[] _allRoles = 
-        [.. Enum.GetValues<Role>().Where(r => r != Role.None)];
+        [.. Enum.GetValues<Role>().Where(static r => r != Role.None && IsSingleBitFlag(r))];
 
     public JwtProvider(IOptions<JwtOptions> options, TimeProvider timeProvider)
     {
@@ -44,7 +44,8 @@ public sealed class JwtProvider : IJwtProvider
 
         foreach (var role in _allRoles)
         {
-            if (roles.HasFlag(role))
+            //if (roles.HasFlag(role))
+            if ((roles & role) == role)
             {
                 claims.Add(new Claim(ClaimTypes.Role, role.ToString()));
             }
@@ -61,6 +62,12 @@ public sealed class JwtProvider : IJwtProvider
         };
 
         var token = _tokenHandler.CreateToken(descriptor);
-        return (_tokenHandler.WriteToken(token), expires);
+        return (token, expires);
+    }
+
+    private static bool IsSingleBitFlag(Role role)
+    {
+        var value = (int)role;
+        return (value & (value - 1)) == 0;
     }
 }

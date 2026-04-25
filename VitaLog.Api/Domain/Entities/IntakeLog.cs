@@ -2,9 +2,9 @@
 
 public sealed class IntakeLog
 {
-    public Guid Id { get; set; }
-    public Guid CourseId { get; set; }
-    public Guid UserId { get; set; } // denormalized for fast sync
+    public Guid Id { get; init; }
+    public Guid CourseId { get; init; }
+    public Guid UserId { get; init; } // denormalized for fast sync
     public decimal ActualServingSize { get; set; } // snapshot, > 0
     public DateTimeOffset TakenAt { get; set; } // UTC
     public DateTimeOffset UpdatedAt { get; set; } // UTC

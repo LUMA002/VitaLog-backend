@@ -2,11 +2,11 @@
 
 public sealed class GlobalIngredient
 {
-    public Guid Id { get; set; }
+    public Guid Id { get; init; }
     public string Name { get; set; } = string.Empty;
     public string DefaultUnit { get; set; } = string.Empty;
     public DateTimeOffset UpdatedAt { get; set; }
     public DateTimeOffset? DeletedAt { get; set; }
 
-    public ICollection<ProductIngredient> ProductIngredients { get; set; } = [];
+    public ICollection<ProductIngredient> ProductIngredients { get; } = [];
 }
