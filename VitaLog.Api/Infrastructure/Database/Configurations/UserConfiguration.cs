@@ -19,7 +19,7 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
 
         builder.Property(x => x.PasswordHash)
             .IsRequired()
-            .HasMaxLength(1024);
+            .HasMaxLength(256);
 
         builder.Property(x => x.Roles)
             .HasConversion<int>()

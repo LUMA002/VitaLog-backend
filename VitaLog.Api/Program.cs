@@ -1,7 +1,10 @@
 using FluentValidation;
+//using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using Serilog;
+using VitaLog.Api.Domain.Entities;
+using VitaLog.Api.Features.Auth;
 using VitaLog.Api.Infrastructure.Auth;
 using VitaLog.Api.Infrastructure.Database;
 using VitaLog.Api.Infrastructure.Middleware;
@@ -58,7 +61,11 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.MapScalarApiReference();
+
+    app.MapDevAuth();
 }
+
+//builder.Services.AddSingleton<IPasswordHasher<User>, PasswordHasher<User>>();
 
 app.MapGet("/health", () => TypedResults.Ok(new { status = "ok" }))
     .WithName("Health")
