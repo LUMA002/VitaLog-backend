@@ -13,14 +13,15 @@ public static class DevAuthEndpoint
     {
         // this route is only for development purposes,
         // it allows to get a JWT token for any email without password
-        app.MapPost("/api/dev/token", async (
+        app.MapPost("/api/dev/token", static async (
             [FromBody] DevTokenRequest request,
             AppDbContext db,
             IJwtProvider jwtProvider,
+            TimeProvider timeProvider,
             CancellationToken ct) =>
         {
             var email = request.Email.Trim().ToLowerInvariant();
-            var user = await db.Users.FirstOrDefaultAsync(u => u.Email == email, ct);
+            var user = await db.Users.FirstOrDefaultAsync(u => u.Email == email && u.DeletedAt == null, ct);
 
             if (user is null)
             {
@@ -30,7 +31,7 @@ public static class DevAuthEndpoint
                     Email = email,
                     PasswordHash = "DEV_MEGAPASS",
                     Roles = Role.User | Role.Admin,
-                    UpdatedAt = DateTimeOffset.UtcNow
+                    UpdatedAt = timeProvider.GetUtcNow()
                 };
                 db.Users.Add(user);
                 await db.SaveChangesAsync(ct);

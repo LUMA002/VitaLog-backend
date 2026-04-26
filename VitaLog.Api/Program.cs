@@ -1,8 +1,9 @@
 using FluentValidation;
-//using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using Serilog;
+using System.Globalization;
 using VitaLog.Api.Domain.Entities;
 using VitaLog.Api.Features.Auth;
 using VitaLog.Api.Infrastructure.Auth;
@@ -10,6 +11,8 @@ using VitaLog.Api.Infrastructure.Database;
 using VitaLog.Api.Infrastructure.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
+
+ValidatorOptions.Global.LanguageManager.Culture = new CultureInfo("en-US");
 
 builder.Host.UseSerilog((context, services, loggerConfiguration) =>
 {
@@ -43,6 +46,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddValidatorsFromAssemblyContaining<Program>(includeInternalTypes: true);
 builder.Services.AddJwtAuth(builder.Configuration);
+builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
@@ -65,7 +69,7 @@ if (app.Environment.IsDevelopment())
     app.MapDevAuth();
 }
 
-//builder.Services.AddSingleton<IPasswordHasher<User>, PasswordHasher<User>>();
+app.MapAuthFeature();
 
 app.MapGet("/health", () => TypedResults.Ok(new { status = "ok" }))
     .WithName("Health")
