@@ -44,9 +44,11 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     }
 });
 
-builder.Services.AddValidatorsFromAssemblyContaining<Program>(includeInternalTypes: true);
+builder.Services.AddValidatorsFromAssemblyContaining<Program>(
+    lifetime: ServiceLifetime.Singleton,
+    includeInternalTypes: true);
 builder.Services.AddJwtAuth(builder.Configuration);
-builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+builder.Services.AddSingleton<IPasswordHasher<User>, PasswordHasher<User>>();
 
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
