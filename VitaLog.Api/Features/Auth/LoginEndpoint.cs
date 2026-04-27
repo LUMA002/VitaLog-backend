@@ -22,10 +22,13 @@ public static class LoginEndpoint
     {
         return group.MapPost("/login", static async Task<Results<Ok<LoginResponse>, ProblemHttpResult>> (
             LoginRequest request,
+            HttpContext context,
             [AsParameters] LoginDependencies deps,
             CancellationToken ct) =>
         {
             var email = request.Email.Trim().ToLowerInvariant();
+            var platform = context.Request.Headers["X-Client-Platform"].FirstOrDefault()?.ToLowerInvariant();
+
             var user = await deps.Db.Users
                 .AsNoTracking()
                 .FirstOrDefaultAsync(u => u.Email == email && u.DeletedAt == null, ct);
@@ -56,6 +59,27 @@ public static class LoginEndpoint
             });
 
             await deps.Db.SaveChangesAsync(ct);
+
+            if (platform == "web")
+            {
+                context.Response.Cookies.Append("X-Access-Token", accessToken, new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.Strict,
+                    Expires = refreshTokenExpiresAtUtc
+                });
+
+                context.Response.Cookies.Append("X-Refresh-Token", plainTextToken, new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.Strict,
+                    Expires = refreshTokenExpiresAtUtc
+                });
+
+                return TypedResults.Ok(new LoginResponse(string.Empty, string.Empty));
+            }
 
             return TypedResults.Ok(new LoginResponse(accessToken, plainTextToken));
         })
