@@ -4,8 +4,11 @@ using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using Serilog;
 using System.Globalization;
+using System.Text.Json.Serialization;
 using VitaLog.Api.Domain.Entities;
 using VitaLog.Api.Features.Auth;
+using VitaLog.Api.Features.Directory;
+using VitaLog.Api.Features.Products;
 using VitaLog.Api.Infrastructure.Auth;
 using VitaLog.Api.Infrastructure.Database;
 using VitaLog.Api.Infrastructure.Middleware;
@@ -42,6 +45,12 @@ builder.Services.AddDbContext<AppDbContext>(options =>
         options.EnableDetailedErrors();
         options.EnableSensitiveDataLogging();
     }
+});
+
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    // Serialize enums as strings in responses for better readability
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
 });
 
 builder.Services.AddValidatorsFromAssemblyContaining<Program>(
@@ -81,6 +90,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.MapAuthFeature();
+
+var apiGroup = app.MapGroup("/api");
+apiGroup.MapGetIngredients();
+apiGroup.MapGetGlobalProducts();
 
 app.MapGet("/health", () => TypedResults.Ok(new { status = "ok" }))
     .WithName("Health")
