@@ -54,7 +54,16 @@ builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
+builder.Services.AddScoped<DatabaseSeeder>();
+
 var app = builder.Build();
+
+// Seed the database on startup
+using (var scope = app.Services.CreateScope())
+{
+    var seeder = scope.ServiceProvider.GetRequiredService<DatabaseSeeder>();
+    await seeder.SeedAsync();
+}
 
 app.UseSerilogRequestLogging();
 app.UseExceptionHandler();

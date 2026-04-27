@@ -17,6 +17,10 @@ public sealed class GlobalIngredientConfiguration : IEntityTypeConfiguration<Glo
             .IsRequired()
             .HasMaxLength(200);
 
+        builder.Property(x => x.Category)
+            .HasConversion<int>()
+            .IsRequired();
+
         builder.Property(x => x.DefaultUnit)
             .IsRequired()
             .HasMaxLength(50);
