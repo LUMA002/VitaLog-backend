@@ -9,11 +9,14 @@ using VitaLog.Api.Domain.Entities;
 using VitaLog.Api.Features.Auth;
 using VitaLog.Api.Features.Directory;
 using VitaLog.Api.Features.Products;
+using VitaLog.Api.Features.Sync;
 using VitaLog.Api.Infrastructure.Auth;
 using VitaLog.Api.Infrastructure.Database;
 using VitaLog.Api.Infrastructure.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// TODO: consider using Brotli\Gzip tools
 
 ValidatorOptions.Global.LanguageManager.Culture = new CultureInfo("en-US");
 
@@ -76,8 +79,9 @@ using (var scope = app.Services.CreateScope())
 
 app.UseSerilogRequestLogging();
 app.UseExceptionHandler();
-app.UseHttpsRedirection();
+// app.UseResponseCompression();
 
+app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -94,6 +98,7 @@ app.MapAuthFeature();
 var apiGroup = app.MapGroup("/api");
 apiGroup.MapGetIngredients();
 apiGroup.MapGetGlobalProducts();
+apiGroup.MapSyncEndpoint();
 
 app.MapGet("/health", () => TypedResults.Ok(new { status = "ok" }))
     .WithName("Health")
