@@ -490,6 +490,7 @@ copilot-instructions.md
 .cursor/
 .cursorrules
 .cursorignore
+*.mdc
 .aix/
 .ai/
 *.ai-chat
