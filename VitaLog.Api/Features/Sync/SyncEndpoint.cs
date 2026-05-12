@@ -2,6 +2,8 @@ using FluentValidation;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using VitaLog.Api.Domain.Enums;
+using VitaLog.Api.Infrastructure.Auth;
+using VitaLog.Api.Infrastructure.Database;
 using VitaLog.Api.Infrastructure.Validation;
 
 namespace VitaLog.Api.Features.Sync;
@@ -10,28 +12,41 @@ public static class SyncEndpoint
 {
     public static RouteHandlerBuilder MapSyncEndpoint(this RouteGroupBuilder group)
     {
-        return group.MapPost("/sync", static Ok<SyncResponse> (
+        return group.MapPost("/sync", static async Task<Ok<SyncResponse>> (
             [FromBody] SyncRequest request,
-            TimeProvider timeProvider,
+            HttpContext context,
+            SyncHandler syncHandler,
             CancellationToken ct) =>
         {
-            _ = request;
-            _ = ct;
-
-            var response = new SyncResponse(
-                timeProvider.GetUtcNow(),
-                [],
-                [],
-                [],
-                [],
-                []
-            );
-
+            var userId = context.GetCurrentUserId();
+            var response = await syncHandler.HandleAsync(userId, request, ct);
             return TypedResults.Ok(response);
         })
         .WithName("SyncOfflineData")
         .WithSummary("Bi-directional synchronization for offline-first clients")
+        .RequireAuthorization()
         .AddValidationFilter<SyncRequest>();
+    }
+}
+
+public sealed class SyncHandler(AppDbContext db, TimeProvider timeProvider)
+{
+    public Task<SyncResponse> HandleAsync(Guid userId, SyncRequest request, CancellationToken ct)
+    {
+        _ = db;
+        _ = userId;
+        _ = request;
+        _ = ct;
+
+        var response = new SyncResponse(
+            timeProvider.GetUtcNow(),
+            [],
+            [],
+            [],
+            [],
+            []);
+
+        return Task.FromResult(response);
     }
 }
 

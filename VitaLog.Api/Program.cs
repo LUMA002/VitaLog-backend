@@ -67,6 +67,7 @@ builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 builder.Services.AddScoped<DatabaseSeeder>();
+builder.Services.AddScoped<SyncHandler>();
 
 var app = builder.Build();
 
