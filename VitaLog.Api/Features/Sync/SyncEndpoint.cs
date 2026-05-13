@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using VitaLog.Api.Domain.Enums;
 using VitaLog.Api.Infrastructure.Auth;
-using VitaLog.Api.Infrastructure.Database;
 using VitaLog.Api.Infrastructure.Validation;
 
 namespace VitaLog.Api.Features.Sync;
@@ -26,27 +25,6 @@ public static class SyncEndpoint
         .WithSummary("Bi-directional synchronization for offline-first clients")
         .RequireAuthorization()
         .AddValidationFilter<SyncRequest>();
-    }
-}
-
-public sealed class SyncHandler(AppDbContext db, TimeProvider timeProvider)
-{
-    public Task<SyncResponse> HandleAsync(Guid userId, SyncRequest request, CancellationToken ct)
-    {
-        _ = db;
-        _ = userId;
-        _ = request;
-        _ = ct;
-
-        var response = new SyncResponse(
-            timeProvider.GetUtcNow(),
-            [],
-            [],
-            [],
-            [],
-            []);
-
-        return Task.FromResult(response);
     }
 }
 
@@ -312,8 +290,20 @@ public sealed class SyncRequestValidator : AbstractValidator<SyncRequest>
 
     private static bool HaveDistinctIds(IEnumerable<Guid> ids)
     {
-        var uniqueIds = new HashSet<Guid>();
-        return ids.All(uniqueIds.Add);
+        // use TryGetNonEnumeratedCount to avoid allocation if the collection is already enumerated
+        var capacity = ids.TryGetNonEnumeratedCount(out var count) ? count : 0;
+        var uniqueIds = new HashSet<Guid>(capacity);
+
+    // avoid allocation of the delegate (instead of using LINQ .All)
+    foreach (var id in ids)
+    {
+        if (!uniqueIds.Add(id))
+        {
+            return false;
+        }
+    }
+
+    return true;
     }
 
     private static bool HasValidIngredientHybrid(Guid? ingredientId, string? customIngredientName)

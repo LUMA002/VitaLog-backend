@@ -2,7 +2,8 @@ using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
 namespace VitaLog.Api.Infrastructure.Middleware
-{
+{   
+    // TODO: Add more detailed and specific error messages for different types of exceptions, not just one for hardcoded 500 Internal Server Error
     public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger,
      IProblemDetailsService problemDetailsService) : IExceptionHandler
     {
