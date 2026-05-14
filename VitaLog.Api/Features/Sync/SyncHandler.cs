@@ -178,6 +178,8 @@ public sealed class SyncHandler(AppDbContext db, TimeProvider timeProvider)
             .Select(static x => new { x.Id, x.CreatorUserId })
             .ToDictionaryAsync(static x => x.Id, static x => x.CreatorUserId, ct);
 
+        MergePendingAddedProductOwners(db, productIds, productOwnersById);
+
         foreach (var dto in incomingProductIngredients)
         {
             if (!productOwnersById.TryGetValue(dto.ProductId, out var productOwnerId))
@@ -250,6 +252,8 @@ public sealed class SyncHandler(AppDbContext db, TimeProvider timeProvider)
             .Where(x => productIds.Contains(x.Id))
             .Select(static x => new { x.Id, x.CreatorUserId })
             .ToDictionaryAsync(static x => x.Id, static x => x.CreatorUserId, ct);
+
+        MergePendingAddedProductOwners(db, productIds, productOwnersById);
 
         foreach (var dto in incomingCourses)
         {
@@ -326,6 +330,8 @@ public sealed class SyncHandler(AppDbContext db, TimeProvider timeProvider)
             .Select(static x => new { x.Id, x.UserId })
             .ToDictionaryAsync(static x => x.Id, static x => x.UserId, ct);
 
+        MergePendingAddedCourseOwners(db, courseIds, courseOwnersById);
+
         foreach (var dto in incomingIntakeLogs)
         {
             if (!courseOwnersById.TryGetValue(dto.CourseId, out var courseOwnerId))
@@ -366,6 +372,54 @@ public sealed class SyncHandler(AppDbContext db, TimeProvider timeProvider)
                 UpdatedAt = serverNow,
                 DeletedAt = dto.DeletedAt
             });
+        }
+    }
+
+    /// <summary>
+    /// EF queries do not see <see cref="EntityState.Added"/> rows until SaveChanges.
+    /// Same-batch FK checks (Product -> ProductIngredient -> Course) must still resolve ownership.
+    /// </summary>
+    private static void MergePendingAddedProductOwners(
+        AppDbContext db,
+        IEnumerable<Guid> productIds,
+        Dictionary<Guid, Guid?> ownersByProductId)
+    {
+        var wanted = productIds as IReadOnlySet<Guid> ?? productIds.ToHashSet();
+        foreach (var entry in db.ChangeTracker.Entries<Product>())
+        {
+            if (entry.State != EntityState.Added)
+            {
+                continue;
+            }
+
+            if (!wanted.Contains(entry.Entity.Id))
+            {
+                continue;
+            }
+
+            ownersByProductId[entry.Entity.Id] = entry.Entity.CreatorUserId;
+        }
+    }
+
+    private static void MergePendingAddedCourseOwners(
+        AppDbContext db,
+        IEnumerable<Guid> courseIds,
+        Dictionary<Guid, Guid> ownersByCourseId)
+    {
+        var wanted = courseIds as IReadOnlySet<Guid> ?? courseIds.ToHashSet();
+        foreach (var entry in db.ChangeTracker.Entries<Course>())
+        {
+            if (entry.State != EntityState.Added)
+            {
+                continue;
+            }
+
+            if (!wanted.Contains(entry.Entity.Id))
+            {
+                continue;
+            }
+
+            ownersByCourseId[entry.Entity.Id] = entry.Entity.UserId;
         }
     }
 }
