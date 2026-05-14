@@ -38,6 +38,7 @@ public sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.HasOne(x => x.CreatorUser)
             .WithMany(x => x.CreatedProducts)
             .HasForeignKey(x => x.CreatorUserId)
-            .OnDelete(DeleteBehavior.SetNull);
+            .OnDelete(DeleteBehavior.Cascade);
+        // .OnDelete(DeleteBehavior.SetNull);
     }
 }
