@@ -12,8 +12,8 @@ using VitaLog.Api.Infrastructure.Database;
 namespace VitaLog.Api.Infrastructure.Database.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260426134455_PasswordFieldResize")]
-    partial class PasswordFieldResize
+    [Migration("20260513173654_BaseInitCreate")]
+    partial class BaseInitCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -78,6 +78,9 @@ namespace VitaLog.Api.Infrastructure.Database.Migrations
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
+
+                    b.Property<int>("Category")
+                        .HasColumnType("integer");
 
                     b.Property<string>("DefaultUnit")
                         .IsRequired()

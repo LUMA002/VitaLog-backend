@@ -13,6 +13,7 @@ using VitaLog.Api.Features.Sync;
 using VitaLog.Api.Infrastructure.Auth;
 using VitaLog.Api.Infrastructure.Database;
 using VitaLog.Api.Infrastructure.Middleware;
+using VitaLog.Api.Infrastructure.Time;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -56,6 +57,10 @@ builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
 });
 
+// Truncates to µs precision — matches PostgreSQL timestamptz and Dart DateTime.
+// Must be registered before AddJwtAuth so every service receives the same singleton.
+builder.Services.AddSingleton<TimeProvider>(new MicrosecondPrecisionTimeProvider(TimeProvider.System));
+
 builder.Services.AddValidatorsFromAssemblyContaining<Program>(
     lifetime: ServiceLifetime.Singleton,
     includeInternalTypes: true);
@@ -71,11 +76,17 @@ builder.Services.AddScoped<SyncHandler>();
 
 var app = builder.Build();
 
-// Seed the database on startup
-using (var scope = app.Services.CreateScope())
+// Seed the database on startup if the --seed argument is provided, then exit without starting the web server
+if (args.Contains("--seed"))
 {
-    var seeder = scope.ServiceProvider.GetRequiredService<DatabaseSeeder>();
-    await seeder.SeedAsync();
+    app.Logger.LogInformation("Seeding database...");
+    using (var scope = app.Services.CreateScope())
+    {
+        var seeder = scope.ServiceProvider.GetRequiredService<DatabaseSeeder>();
+        await seeder.SeedAsync();
+    }
+    app.Logger.LogInformation("Seeding completed successfully. Exiting application.");
+    return; // end the application immediately after seeding without starting the web server
 }
 
 app.UseSerilogRequestLogging();

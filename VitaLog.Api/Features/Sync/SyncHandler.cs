@@ -11,92 +11,96 @@ public sealed class SyncHandler(AppDbContext db, TimeProvider timeProvider)
 
     public async Task<SyncResponse> HandleAsync(Guid userId, SyncRequest request, CancellationToken ct)
     {
-        await using var tx = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
-        var serverNow = timeProvider.GetUtcNow();
+        var strategy = db.Database.CreateExecutionStrategy();
+        return await strategy.ExecuteAsync(async () =>
+        {
+            await using var tx = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
+            var serverNow = timeProvider.GetUtcNow();
 
-        await UpsertProductsAsync(userId, request.Products, serverNow, ct);
-        await UpsertProductIngredientsAsync(userId, request.ProductIngredients, serverNow, ct);
-        await UpsertCoursesAsync(userId, request.Courses, serverNow, ct);
-        await UpsertIntakeLogsAsync(userId, request.IntakeLogs, serverNow, ct);
+            await UpsertProductsAsync(userId, request.Products, serverNow, ct);
+            await UpsertProductIngredientsAsync(userId, request.ProductIngredients, serverNow, ct);
+            await UpsertCoursesAsync(userId, request.Courses, serverNow, ct);
+            await UpsertIntakeLogsAsync(userId, request.IntakeLogs, serverNow, ct);
 
-        await db.SaveChangesAsync(ct);
+            await db.SaveChangesAsync(ct);
 
-        var since = request.LastSyncAt?.AddSeconds(-1) ?? DateTimeOffset.MinValue;
+            var since = request.LastSyncAt?.AddSeconds(-1) ?? DateTimeOffset.MinValue;
 
-        var products = await db.Products
-            .AsNoTracking()
-            .Where(static x => x.UpdatedAt > DateTimeOffset.MinValue)
-            .Where(x => x.UpdatedAt > since && (x.CreatorUserId == userId || x.CreatorUserId == null))
-            .Select(static x => new SyncProductDto(
-                x.Id,
-                x.Name,
-                x.Description,
-                x.UpdatedAt,
-                x.DeletedAt))
-            .ToListAsync(ct);
+            var products = await db.Products
+                .AsNoTracking()
+                .Where(static x => x.UpdatedAt > DateTimeOffset.MinValue)
+                .Where(x => x.UpdatedAt > since && (x.CreatorUserId == userId || x.CreatorUserId == null))
+                .Select(static x => new SyncProductDto(
+                    x.Id,
+                    x.Name,
+                    x.Description,
+                    x.UpdatedAt,
+                    x.DeletedAt))
+                .ToListAsync(ct);
 
-        var productIngredients = await db.ProductIngredients
-            .AsNoTracking()
-            .Where(x => x.UpdatedAt > since && (x.Product.CreatorUserId == userId || x.Product.CreatorUserId == null))
-            .Select(static x => new SyncProductIngredientDto(
-                x.Id,
-                x.ProductId,
-                x.IngredientId,
-                x.CustomIngredientName,
-                x.Amount,
-                x.Unit,
-                x.UpdatedAt,
-                x.DeletedAt))
-            .ToListAsync(ct);
+            var productIngredients = await db.ProductIngredients
+                .AsNoTracking()
+                .Where(x => x.UpdatedAt > since && (x.Product.CreatorUserId == userId || x.Product.CreatorUserId == null))
+                .Select(static x => new SyncProductIngredientDto(
+                    x.Id,
+                    x.ProductId,
+                    x.IngredientId,
+                    x.CustomIngredientName,
+                    x.Amount,
+                    x.Unit,
+                    x.UpdatedAt,
+                    x.DeletedAt))
+                .ToListAsync(ct);
 
-        var courses = await db.Courses
-            .AsNoTracking()
-            .Where(x => x.UserId == userId && x.UpdatedAt > since)
-            .Select(static x => new SyncCourseDto(
-                x.Id,
-                x.ProductId,
-                x.ServingSize,
-                x.TimeOfDay,
-                x.StartDate,
-                x.EndDate,
-                x.UpdatedAt,
-                x.DeletedAt))
-            .ToListAsync(ct);
+            var courses = await db.Courses
+                .AsNoTracking()
+                .Where(x => x.UserId == userId && x.UpdatedAt > since)
+                .Select(static x => new SyncCourseDto(
+                    x.Id,
+                    x.ProductId,
+                    x.ServingSize,
+                    x.TimeOfDay,
+                    x.StartDate,
+                    x.EndDate,
+                    x.UpdatedAt,
+                    x.DeletedAt))
+                .ToListAsync(ct);
 
-        var intakeLogs = await db.IntakeLogs
-            .AsNoTracking()
-            .Where(x => x.UserId == userId && x.UpdatedAt > since)
-            .Select(static x => new SyncIntakeLogDto(
-                x.Id,
-                x.CourseId,
-                x.ActualServingSize,
-                x.TakenAt,
-                x.UpdatedAt,
-                x.DeletedAt))
-            .ToListAsync(ct);
+            var intakeLogs = await db.IntakeLogs
+                .AsNoTracking()
+                .Where(x => x.UserId == userId && x.UpdatedAt > since)
+                .Select(static x => new SyncIntakeLogDto(
+                    x.Id,
+                    x.CourseId,
+                    x.ActualServingSize,
+                    x.TakenAt,
+                    x.UpdatedAt,
+                    x.DeletedAt))
+                .ToListAsync(ct);
 
-        var globalIngredients = await db.GlobalIngredients
-            .AsNoTracking()
-            .Where(x => x.UpdatedAt > since)
-            .Select(static x => new SyncGlobalIngredientDto(
-                x.Id,
-                x.Name,
-                x.DefaultUnit,
-                x.Category,
-                x.UpdatedAt,
-                x.DeletedAt))
-            .ToListAsync(ct);
+            var globalIngredients = await db.GlobalIngredients
+                .AsNoTracking()
+                .Where(x => x.UpdatedAt > since)
+                .Select(static x => new SyncGlobalIngredientDto(
+                    x.Id,
+                    x.Name,
+                    x.DefaultUnit,
+                    x.Category,
+                    x.UpdatedAt,
+                    x.DeletedAt))
+                .ToListAsync(ct);
 
-        var response = new SyncResponse(
-            serverNow,
-            products,
-            productIngredients,
-            courses,
-            intakeLogs,
-            globalIngredients);
+            var response = new SyncResponse(
+                serverNow,
+                products,
+                productIngredients,
+                courses,
+                intakeLogs,
+                globalIngredients);
 
-        await tx.CommitAsync(ct);
-        return response;
+            await tx.CommitAsync(ct);
+            return response;
+        });
     }
 
     private async Task UpsertProductsAsync(

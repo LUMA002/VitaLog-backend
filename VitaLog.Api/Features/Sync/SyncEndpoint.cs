@@ -294,16 +294,16 @@ public sealed class SyncRequestValidator : AbstractValidator<SyncRequest>
         var capacity = ids.TryGetNonEnumeratedCount(out var count) ? count : 0;
         var uniqueIds = new HashSet<Guid>(capacity);
 
-    // avoid allocation of the delegate (instead of using LINQ .All)
-    foreach (var id in ids)
-    {
-        if (!uniqueIds.Add(id))
+        // avoid allocation of the delegate (instead of using LINQ .All)
+        foreach (var id in ids)
         {
-            return false;
+            if (!uniqueIds.Add(id))
+            {
+                return false;
+            }
         }
-    }
 
-    return true;
+        return true;
     }
 
     private static bool HasValidIngredientHybrid(Guid? ingredientId, string? customIngredientName)

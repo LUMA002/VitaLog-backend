@@ -61,7 +61,6 @@ public static class AuthServiceCollectionExtensions
 
         services.AddAuthorization();
 
-        services.AddSingleton(TimeProvider.System);
         services.AddSingleton<IJwtProvider, JwtProvider>();
         services.AddSingleton<IRefreshTokenProvider, RefreshTokenProvider>();
 
