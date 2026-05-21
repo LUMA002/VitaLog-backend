@@ -9,6 +9,7 @@ public static class AuthEndpoints
 
         authGroup.MapRegister();
         authGroup.MapLogin();
+        authGroup.MapRefresh();
 
         return app;
     }
