@@ -93,7 +93,12 @@ app.UseSerilogRequestLogging();
 app.UseExceptionHandler();
 // app.UseResponseCompression();
 
-app.UseHttpsRedirection();
+// Mobile dev clients call http://127.0.0.1:5247 via adb reverse. HTTPS redirect
+// would send them to :7059 (not reversed) and break with NetworkFailure on device.
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 app.UseAuthentication();
 app.UseAuthorization();
 
