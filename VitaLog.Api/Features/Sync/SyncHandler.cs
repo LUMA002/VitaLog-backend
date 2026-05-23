@@ -35,7 +35,8 @@ public sealed class SyncHandler(AppDbContext db, TimeProvider timeProvider)
                     x.Name,
                     x.Description,
                     x.UpdatedAt,
-                    x.DeletedAt))
+                    x.DeletedAt,
+                    x.CreatorUserId))
                 .ToListAsync(ct);
 
             var productIngredients = await db.ProductIngredients

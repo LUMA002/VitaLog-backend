@@ -40,7 +40,8 @@ public sealed record SyncProductDto(
     string Name,
     string? Description,
     DateTimeOffset UpdatedAt,
-    DateTimeOffset? DeletedAt);
+    DateTimeOffset? DeletedAt,
+    Guid? CreatorUserId = null);
 
 public sealed record SyncProductIngredientDto(
     Guid Id,

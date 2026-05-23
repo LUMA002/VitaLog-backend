@@ -540,6 +540,7 @@ public sealed class SyncEndpointTests(CustomWebApplicationFactory factory) : Bas
         ackProduct.Name.Should().Be(productName);
         ackProduct.Description.Should().Be(productDescription);
         ackProduct.DeletedAt.Should().BeNull();
+        ackProduct.CreatorUserId.Should().Be(userId);
         ackProduct.UpdatedAt.Should().Be(response.ServerTime);
 
         var ackPi = response.ProductIngredients.Should().ContainSingle(x => x.Id == productIngredientId).Subject;
