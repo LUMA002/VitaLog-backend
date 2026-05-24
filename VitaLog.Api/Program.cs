@@ -74,6 +74,21 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddScoped<DatabaseSeeder>();
 builder.Services.AddScoped<SyncHandler>();
 
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+                     ?? Array.Empty<string>();
+
+// CORS policy with cookies support
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("StrictCorsPolicy", policy =>
+    {
+        policy.WithOrigins(allowedOrigins)
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials(); // allow HttpOnly cookies
+    });
+});
+
 var app = builder.Build();
 
 // Seed the database on startup if the --seed argument is provided, then exit without starting the web server
@@ -99,6 +114,9 @@ if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
 }
+
+app.UseCors("StrictCorsPolicy");
+
 app.UseAuthentication();
 app.UseAuthorization();
 
